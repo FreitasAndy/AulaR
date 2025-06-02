@@ -1,7 +1,9 @@
 # AulaR
 Scripts e dados para a aula de "Análise e visualização de dados no R", da disciplina "CEN5807 - Bioinformática aplicada ao estudo de comunidades microbianas" do CENA/USP.
 
-## Instale o R e o RStudio.
+## Primeiros passos
+
+Instale o R e o RStudio.
 
 Na sequência, instale os pacotes que utilizaremos com os seguintes comandos:
 
