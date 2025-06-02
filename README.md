@@ -28,3 +28,7 @@ if(!require("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 BiocManager::install("ALDEx2")
 install.packages("file2meco", repos = BiocManager::repositories())
 
+## Seguindo a aula
+
+Baixe todo o conteúdo aqui do GitHub e salve-o em uma única pasta separada.
+Abra o arquivo Aula Dados R.Rproj no RStudio e siga os passos em aula.
