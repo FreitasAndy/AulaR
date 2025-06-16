@@ -8,8 +8,9 @@
 
 #Instalando Pacotes
 
-pacotes <- c("tidyverse","ggplot2", "devtools", "microeco", "dplyr", "magrittr", "ggpubr", 
-             "vegan", "randomForest")
+pacotes <- c("tidyverse","ggplot2", "devtools", 
+             "microeco", "dplyr", "magrittr",
+             "ggpubr", "vegan", "randomForest")
 
 if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
   instalador <- pacotes[!pacotes %in% installed.packages()]
@@ -93,13 +94,14 @@ t1 <- trans_abund$new(dataset = dataset.r, taxrank = "Phylum", ntaxa = 8) #separ
 t1$plot_bar(others_color = "grey70", facet = "Substrate", xtext_keep = FALSE, legend_text_italic = FALSE)
 
 t1 <- trans_abund$new(dataset = dataset.r, taxrank = "Family", ntaxa = 10) #separando por família
-t1$plot_bar(others_color = "lightblue", facet = "Substrate", xtext_keep = FALSE, legend_text_italic = FALSE)
+t1$plot_bar(others_color = "pink", facet = "Sand", xtext_keep = FALSE, legend_text_italic = TRUE)
 
 # O parametro groupmean pode ser usado para fazer uma barra por grupo
 t1 <- trans_abund$new(dataset = dataset.r, taxrank = "Phylum", ntaxa = 10, groupmean = "Substrate")
 g1 <- t1$plot_bar(others_color = "grey70", legend_text_italic = FALSE)
 g1
-g1 + theme_classic() + theme(axis.title.y = element_text(size = 14.27))
+g1 + theme_classic() + 
+  theme(axis.title.y = element_text(size = 10)) 
 
 
 ####
@@ -108,13 +110,24 @@ g1 + theme_classic() + theme(axis.title.y = element_text(size = 14.27))
 t1 <- trans_abund$new(dataset = dataset.r, taxrank = "Genus", ntaxa = 6)
 t1$plot_heatmap(facet = "Substrate", xtext_keep = FALSE, withmargin = FALSE)
 lara.teste <- t1$plot_heatmap(facet = "Substrate", xtext_keep = FALSE, withmargin = FALSE)
-lara.teste + theme(axis.title.y = element_text(size = 20))
+lara.teste + theme(axis.title.y = element_text(size = 10))
 
 
 #Donut plot
 t1 <- trans_abund$new(dataset = dataset.r, taxrank = "Phylum", ntaxa = 8, groupmean = "Substrate")
 t1$plot_donut(label = FALSE)
 t1$plot_donut(label = TRUE)
+
+teste.aula <- t1$plot_donut(label = TRUE)
+teste.aula
+
+ggplot2::ggsave(filename = "Donut_Plot.svg", 
+                plot = teste.aula,
+                device = "svg",
+                dpi = 1200,
+                width = 20,
+                height = 12,
+                units = "cm")
 
 #Diagrama de Venn
 dataset.venn <- dataset$merge_samples("Substrate")
@@ -160,6 +173,17 @@ alpha.p =
 
 alpha.p
 
+
+alpha.bar = 
+  ggplot(data = alpha, aes(x=Substrate, y=observed, fill = Substrate)) +
+  geom_bar(stat="identity", color="black") +
+  labs(x = "Substrate", y= "Number of Taxa") +
+  labs(color='Substrate') + guides(color = "none")+
+  scale_fill_manual(values = c("#cb6751", "#7aa457")) +
+  theme_bw() 
+
+alpha.bar
+
 ###
 
 #Beta diversidade
@@ -187,7 +211,7 @@ p2
 
 p3 = p4 + geom_point(size = 6, alpha = 0.8) +
   theme(legend.position = "right") +
-  annotate("text", x = -60, y = 100, hjust = 0.2 , 
+  annotate("text", x = 70, y = -200, hjust = 0.2 , 
            label = bquote('Substrate:'~R^2~'= 0.27  |  p = 0.03'), size = 3)+
   stat_ellipse(type = "t") +
   theme_bw()
@@ -275,11 +299,23 @@ t1$cal_network_attr()
 t1$res_network_attr
 t1$save_network(filepath = "Control_network.gexf")
 
+
+t1 <- trans_network$new(dataset = group_ADE, 
+                        cor_method = "spearman", 
+                        use_WGCNA_pearson_spearman = TRUE, 
+                        filter_thres = 0.001)
+t1$cal_network(COR_p_thres = 0.05, COR_cut = 0.7)
+t1$cal_module(method = "cluster_fast_greedy")
+t1$cal_network_attr()
+t1$res_network_attr
+t1$save_network(filepath = "ADE_WGCNA_network.gexf")
+
 ####
 
 #Analisando dados que não são de NGS
 
 shapiro.test(samples_df$Root_size)
+#p>0.05 = normal; p<0.05= não normal
 
 kruskal.test(x = samples_df$Root_size, g = samples_df$Substrate)
 
@@ -333,3 +369,24 @@ dev.print(tiff, "./biplotPCA.tiff", compression = "lzw", res=600, height=6, widt
 
 factoextra::fviz_pca_biplot(chem, ggtheme = theme_bw(), repel = T)
 #dev.print(tiff, "./Figures/biplotPCA_Color.tiff", compression = "lzw", res=600, height=6, width=9, units="in")
+
+
+
+
+### Extra: grafico de barras com desvio
+sum.mb = Rmisc::summarySE(data = Mapfile, measurevar = "Conc", groupvars = c("Treatment", "Source", "Depth"))
+sum.mb = sum.mb %>% mutate(Source=factor(Source, levels=c("ADE Forest", "ADE Cassava", "Oxisol Cassava")))
+sum.mb$Depth <- as.character(sum.mb$Depth)
+sum.mb$Conc <- as.numeric(sum.mb$Conc)
+mb = 
+  ggplot(data = sum.mb, aes(x=Depth, y=Conc, fill = Source))  +
+  geom_bar(stat="identity", color="black", 
+           position=position_dodge()) +
+  geom_errorbar(aes(ymin=Conc, ymax=Conc+sd), width=.2,
+                position=position_dodge(.9)) +
+  theme_classic() +
+  labs(x = "", y= "DNA Concentration \n (ng/uL)", title = "Microbial Biomass") +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=0.5)) +
+  guides(color = "none")+
+  scale_fill_manual(values = c("darkgreen" ,"#7aa457", "#cb6751"))
+mb
